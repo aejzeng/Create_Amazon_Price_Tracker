@@ -25,18 +25,21 @@ price_combine = [whole_price, decimal_price]
 price = "".join(price_combine)
 # print(type(price))
 
-price_threshold = SET_YOUR_OWN_PRICE_THRESHOLD_ALERT
+product_title = soup.find(id="productTitle").getText().strip()
+
+price_threshold = 234  #Example price triggering threshold
 # -------------------------TRIGGER EMAIL NOTIFICATION ---------------------------------- #
 if float(price_threshold) > float(price):
     msg = MIMEMultipart()
-    msg['From'] = "FROM WHICH THE EMAIL IS SENT"
-    msg['To'] = "WHICH THE EMAIL IS RECEIVED"
+    msg['From'] = "aejzeng@gmail.com"
+    msg['To'] = "powermove_egg@hotmail.com"
     msg['Subject'] = "Your Amazon Price Deal"
 
-    body = f"Apple AirPods Pro (2nd Gen) with MagSafe Case (USB-C) is now: {currency}{price}"
+
+    body = f"{product_title}is now: {currency}{price}\nLink: {AMZ_URL}"
     msg.attach(MIMEText(body, 'plain', 'utf-8'))
 
-    with smtplib.SMTP("smtp.gmail.com") as connection:
+    with smtplib.SMTP("YOUR_SMTP_ADDRESS") as connection:
         connection.starttls()
         connection.login(user=os.environ.get("user"), password=os.environ.get("password"))
         connection.sendmail(from_addr=os.environ.get("from_addr"),
