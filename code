@@ -1,0 +1,45 @@
+from bs4 import BeautifulSoup
+import requests
+from pprint import pprint
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import os
+
+AMZ_URL = "https://www.amazon.de/-/en/Apple-AirPods-MagSafe-Case-USB-C/dp/B0CHWZ9TZS/?_encoding=UTF8&pd_rd_w=Zey6n&content-id=amzn1.sym.fbb008b6-8bd1-49a9-ac48-645af67481b8&pf_rd_p=fbb008b6-8bd1-49a9-ac48-645af67481b8&pf_rd_r=V4PJ39FA9DFBM1MGXD9A&pd_rd_wg=u2i2X&pd_rd_r=22cf92d0-74f7-43bd-9f65-df6bf46026b8&ref_=pd_hp_d_atf_unk"
+HEADERS = {
+    "User-Agent": os.environ.get("YOUR_USER_AGENT"),
+    "Accept-Language": os.environ.get("YOUR_ACCEPT_LANGUAGE")
+}
+response = requests.get(AMZ_URL, headers=HEADERS)
+webpage = response.text
+# pprint(webpage)
+
+# ------------------------FETCH PRICE INFO VIA BEAUTIFULSOUP---------------------------- #
+soup = BeautifulSoup(webpage, "html.parser")
+# print(soup)
+whole_price = soup.find(name="span", class_="a-price-whole").getText()
+decimal_price = soup.find(name="span", class_="a-price-fraction").getText()
+currency = soup.find(name="span", class_="a-price-symbol").getText()
+price_combine = [whole_price, decimal_price]
+price = "".join(price_combine)
+# print(type(price))
+
+price_threshold = SET_YOUR_OWN_PRICE_THRESHOLD_ALERT
+# -------------------------TRIGGER EMAIL NOTIFICATION ---------------------------------- #
+if float(price_threshold) > float(price):
+    msg = MIMEMultipart()
+    msg['From'] = "FROM WHICH THE EMAIL IS SENT"
+    msg['To'] = "WHICH THE EMAIL IS RECEIVED"
+    msg['Subject'] = "Your Amazon Price Deal"
+
+    body = f"Apple AirPods Pro (2nd Gen) with MagSafe Case (USB-C) is now: {currency}{price}"
+    msg.attach(MIMEText(body, 'plain', 'utf-8'))
+
+    with smtplib.SMTP("smtp.gmail.com") as connection:
+        connection.starttls()
+        connection.login(user=os.environ.get("user"), password=os.environ.get("password"))
+        connection.sendmail(from_addr=os.environ.get("from_addr"),
+                            to_addrs=os.environ.get("to_addrs"),
+                            msg=msg.as_string()
+                            )
